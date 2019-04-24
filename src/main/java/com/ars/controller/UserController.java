@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * Created by guowanyi on 2019/3/12.
@@ -83,16 +82,14 @@ public class UserController {
 
             // Process the reply
             if (reply instanceof TextMessage) {
-                System.out.printf("TextMessage response received: '%s'%n",
-                    ((TextMessage)reply).getText());
+                System.out.printf("TextMessage response received: '%s'%n", ((TextMessage)reply).getText());
                 //todo： update status as 审核结果
             }
-            System.out.printf("Response Message Dump:%n%s%n",reply.dump());
+            System.out.printf("Response Message Dump:%n%s%n", reply.dump());
         } catch (JCSMPRequestTimeoutException e) {
             System.out.println("Failed to receive a reply in " + timeoutMs + " msecs");
         }
 
     }
-
 
 }

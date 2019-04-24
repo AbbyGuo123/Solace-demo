@@ -8,19 +8,14 @@ import com.ars.service.ActivityService;
 import com.ars.utils.JMSConnecter;
 import com.solacesystems.jcsmp.*;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.*;
-
-import org.slf4j.Logger;
 
 /**
  * @author Ocean Liang
@@ -30,21 +25,13 @@ import org.slf4j.Logger;
 @RestController
 @RequestMapping("/activity")
 public class ActivityController {
-    @Resource
-    private ActivityService activityService;
-
-    @Autowired
-    private Registration registration;
-
-    @Autowired
-    private DiscoveryClient client;
+    @Resource private ActivityService activityService;
 
     private final static Logger logger = LoggerFactory.getLogger(ActivityController.class);
 
     @PostMapping
     public ResponseDto createActivity(@RequestBody Activity activity) {
-        if (Objects.isNull(activity.getAuthor()) || Objects.isNull(activity.getTitle())
-                || Objects.isNull(activity.getContent())) {
+        if (Objects.isNull(activity.getAuthor()) || Objects.isNull(activity.getTitle()) || Objects.isNull(activity.getContent())) {
             return ResponseDto.fail("author,title,content should not be empty");
         }
         activityService.createActivity(activity);
@@ -61,9 +48,8 @@ public class ActivityController {
     }
 
     @GetMapping
-    public ResponseDto getActivityByCriteria(
-            @RequestParam(name = "title", required = false) String title,
-            @RequestParam(name = "author", required = false) String author) {
+    public ResponseDto getActivityByCriteria(@RequestParam(name = "title", required = false) String title,
+        @RequestParam(name = "author", required = false) String author) {
         AcitivitySearchCriteria searchCriteria = new AcitivitySearchCriteria();
         searchCriteria.setTitle(title);
         searchCriteria.setAuthor(author);
@@ -89,7 +75,7 @@ public class ActivityController {
 
     @PatchMapping("/{activityId}")
     public ResponseDto participateActivity(@PathVariable String activityId, @RequestBody JSONObject jsonObject) {
-        String username = (String) jsonObject.get("userName");
+        String username = (String)jsonObject.get("userName");
         if (Objects.isNull(username)) {
             return ResponseDto.fail("userName should not be empty");
         }
@@ -125,23 +111,23 @@ public class ActivityController {
         final XMLMessageConsumer consumer = session.getMessageConsumer(new XMLMessageListener() {
             @Override
             public void onReceive(BytesXMLMessage request) {
-                if(request.getReplyTo() != null){
+                if (request.getReplyTo() != null) {
                     TextMessage reply = JCSMPFactory.onlyInstance().createMessage(TextMessage.class);
                     reply.setText("审核结果");
+                    System.out.println("sending reply： 审核结果");
                     try {
                         producer.sendReply(request, reply);
                     } catch (JCSMPException e) {
                         System.out.println("Error sending reply.");
                     }
-                }
-                else{
+                } else {
                     System.out.println("Received message without reply-to field");
                 }
             }
 
             @Override
             public void onException(JCSMPException e) {
-                System.out.printf("Consumer received exception:%s%n",e);
+                System.out.printf("Consumer received exception:%s%n", e);
                 latch.countDown();
             }
         });
